@@ -1,0 +1,4 @@
+{:paths ["src"]
+ :deps  {info.sunng/ring-jetty9-adapter {:mvn/version "0.22.6"}
+         mount/mount                    {:mvn/version "0.1.17"}
+         com.cnuernber/charred          {:mvn/version "1.034"}}}
