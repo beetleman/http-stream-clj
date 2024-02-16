@@ -1,13 +1,15 @@
 (ns beetleman.http-stream-clj.server
-  (:require [charred.api :as charred]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [honey.sql :as sql]
+            [jsonista.core :as jsonista]
             [mount.core :as mount]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :refer [as-unqualified-lower-maps datafiable-row]]
             [ring.adapter.jetty9 :as jetty]
             [ring.core.protocols :as ring-protocols]
             [ring.util.response :refer [response content-type]]))
+
+(set! *warn-on-reflection* true)
 
 (mount/defstate ds
   :start {:dbtype   "postgres"
@@ -24,7 +26,7 @@
       (with-open [writer (io/writer output-stream)]
         (try
           (transduce (comp xform
-                           (map charred/write-json-str)
+                           (map jsonista/write-value-as-string)
                            (interpose ",\n"))
                      (fn
                        ([]
@@ -32,9 +34,8 @@
                        ([_]
                         (.write writer "]")
                         (.flush writer))
-                       ([_ x]
-                        (.write writer x)
-                        (.flush writer)))
+                       ([_ ^String x]
+                        (.write writer x)))
                      coll)
           (catch org.eclipse.jetty.io.EofException _)
           (catch Exception e
