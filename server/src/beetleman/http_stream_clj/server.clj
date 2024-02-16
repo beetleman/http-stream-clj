@@ -1,20 +1,28 @@
 (ns beetleman.http-stream-clj.server
-  (:require [mount.core :as mount]
-            [ring.util.response :refer [response content-type]]
-            [ring.core.protocols :as ring-protocols]
+  (:require [charred.api :as charred]
+            [clojure.java.io :as io]
+            [honey.sql :as sql]
+            [mount.core :as mount]
+            [next.jdbc :as jdbc]
+            [next.jdbc.result-set :refer [as-unqualified-lower-maps datafiable-row]]
             [ring.adapter.jetty9 :as jetty]
-            [charred.api :as charred]
-            [clojure.java.io :as io]))
+            [ring.core.protocols :as ring-protocols]
+            [ring.util.response :refer [response content-type]]))
+
+(def ds {:dbtype      "postgres"
+         :dbname      "postgres"
+         :user        "postgres"
+         :password    "password"})
 
 (def port 9900)
-(def n 100)
 
-(defn stream-json-coll [coll]
+(defn stream-json-coll [coll xform]
   (reify ring-protocols/StreamableResponseBody
     (write-body-to-stream [_ _ output-stream]
       (with-open [writer (io/writer output-stream)]
         (try
-          (transduce (comp (map charred/write-json-str)
+          (transduce (comp xform
+                           (map charred/write-json-str)
                            (interpose ",\n"))
                      (fn
                        ([]
@@ -30,9 +38,19 @@
             (println e)
             (throw e)))))))
 
-(defn handler [_]
-  (-> (range n)
-      stream-json-coll
+(defn handler [{:keys [query-string]}]
+  (-> (jdbc/plan ds
+                 (sql/format {:select [:*]
+                              :from   [:items]})
+                 (if (= query-string "stream")
+                   {:fetch-size  100
+                    :concurrency :read-only
+                    :auto-commit false
+                    :cursors     :close
+                    :result-type :forward-only
+                    :builder-fn  as-unqualified-lower-maps}
+                   {:builder-fn  as-unqualified-lower-maps}))
+      (stream-json-coll (map #(datafiable-row % ds {})))
       response
       (content-type "application/json; charset=utf-8")))
 
@@ -44,6 +62,4 @@
 
 (comment
 
-  (mount/start)
-
-  )
+  (mount/start))

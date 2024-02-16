@@ -2,6 +2,16 @@
   (:require [clj-http.client :as http]
             [charred.api :as charred]))
 
-(-> (http/get "http://localhost:9900" {:as :stream})
-    :body
-    (charred/read-json))
+(comment
+
+
+  ;; not sql streaming
+  (-> (http/get "http://localhost:9900" {:as :stream})
+      :body
+      (charred/read-json))
+
+
+  ;; streaming
+  (-> (http/get "http://localhost:9900?stream" {:as :stream})
+      :body
+      (charred/read-json)))
