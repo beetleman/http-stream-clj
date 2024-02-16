@@ -42,6 +42,7 @@
   (-> (jdbc/plan ds
                  (sql/format {:select [:*]
                               :from   [:items]})
+                 ;; https://jdbc.postgresql.org/documentation/query/#getting-results-based-on-a-cursor
                  (if (= query-string "stream")
                    {:fetch-size  100
                     :concurrency :read-only
@@ -60,6 +61,8 @@
                            :join? false})
   :stop (jetty/stop-server server))
 
-(comment
-
+(defn start []
   (mount/start))
+
+(defn stop []
+  (mount/stop))
