@@ -1,3 +1,0 @@
-{:paths ["src"]
- :deps  {clj-http/clj-http     {:mvn/version "3.12.3"}
-         com.cnuernber/charred {:mvn/version "1.034"}}}

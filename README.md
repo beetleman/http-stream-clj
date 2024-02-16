@@ -10,8 +10,6 @@ Load `./setup.sql` using favorite pg client
 
 ## Run REPL
 
-run REPL from `./server`.
-
 ```clojure
 (start)
 
