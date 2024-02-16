@@ -9,10 +9,12 @@
             [ring.core.protocols :as ring-protocols]
             [ring.util.response :refer [response content-type]]))
 
-(def ds {:dbtype      "postgres"
-         :dbname      "postgres"
-         :user        "postgres"
-         :password    "password"})
+(mount/defstate ds
+  :start {:dbtype   "postgres"
+          :dbname   "postgres"
+          :user     "postgres"
+          :password (System/getenv "DB_PASSWORD")
+          :port     (Integer/parseInt (System/getenv "DB_PORT"))})
 
 (def port 9900)
 
@@ -34,6 +36,7 @@
                         (.write writer x)
                         (.flush writer)))
                      coll)
+          (catch org.eclipse.jetty.io.EofException _)
           (catch Exception e
             (println e)
             (throw e)))))))
